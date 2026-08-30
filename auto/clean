@@ -1,0 +1,6 @@
+#!/bin/sh
+set -e
+lb clean noauto "${@}"
+rm -f config/binary config/bootstrap config/chroot config/common config/source
+rm -rf config/binary.d config/bootstrap.d config/chroot.d config/common.d config/source.d
+rm -f build.log

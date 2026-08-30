@@ -1,0 +1,6 @@
+#!/bin/bash
+# Mock used only when real age is absent, so the circularity logic stays
+# testable on any host. Derives a deterministic fake public key.
+if [[ "${1:-}" == "-y" ]]; then
+  grep -m1 '^AGE-SECRET-KEY-' "$2" 2>/dev/null | sed 's/^AGE-SECRET-KEY-/age1mock/' | tr 'A-Z' 'a-z'
+fi

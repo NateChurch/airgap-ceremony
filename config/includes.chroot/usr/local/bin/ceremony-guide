@@ -1,0 +1,156 @@
+#!/usr/bin/env bash
+# ceremony-guide [topic|number|all|list]
+#
+# Render the ceremony documentation in the terminal. Markdown is formatted
+# with ANSI rather than shipping a renderer -- this image has no network and
+# every added package is a package that must be justified.
+#
+#   ceremony-guide              list documents
+#   ceremony-guide quickstart   by name (prefix match)
+#   ceremony-guide 2            by number
+#   ceremony-guide all          everything, paged
+#   ceremony-guide -p <topic>   force the pager
+#   ceremony-guide -r <topic>   raw markdown, no formatting
+
+set -uo pipefail
+
+DOCDIR="${CEREMONY_DOCS:-}"
+for d in "$HOME/docs" /usr/local/share/ceremony/docs ./docs; do
+	[[ -z "$DOCDIR" && -d "$d" ]] && DOCDIR="$d"
+done
+[[ -n "$DOCDIR" && -d "$DOCDIR" ]] || { echo "no docs directory found" >&2; exit 1; }
+
+ROOTDIR="$(dirname "$DOCDIR")"
+
+RAW=0; FORCE_PAGER=0
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		-r|--raw)   RAW=1; shift ;;
+		-p|--pager) FORCE_PAGER=1; shift ;;
+		-h|--help)  sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+		*) break ;;
+	esac
+done
+
+# --- markdown -> ANSI -------------------------------------------------------
+# Deliberately small. Handles what these documents actually use: headings,
+# fenced code, tables, lists, blockquotes, inline code and bold.
+render() {
+	awk '
+	BEGIN {
+		b   = "\033[1m";    off = "\033[0m"
+		dim = "\033[2m";    cyan= "\033[36m"
+		grn = "\033[32m";   yel = "\033[33m"
+		incode = 0
+	}
+	/^```/ {
+		incode = !incode
+		if (incode) printf "%s", dim
+		else        printf "%s", off
+		next
+	}
+	incode { printf "    %s%s%s\n", cyan, $0, off; next }
+
+	/^# /   { sub(/^# /,   ""); printf "\n%s%s%s\n", b, toupper($0), off
+	          n = length($0); s = ""
+	          while (length(s) < n) s = s "="
+	          printf "%s%s%s\n", b, s, off; next }
+	/^## /  { sub(/^## /,  ""); printf "\n%s%s%s\n", b, $0, off
+	          n = length($0); s = ""
+	          while (length(s) < n) s = s "-"
+	          printf "%s%s%s\n", dim, s, off; next }
+	/^### / { sub(/^### /, ""); printf "\n%s%s%s\n", b, $0, off; next }
+
+	/^---+$/ { printf "%s%s%s\n", dim, "................................................", off; next }
+	/^> /    { sub(/^> /, ""); printf "  %s%s%s\n", yel, $0, off; next }
+
+	# tables: highlight the header row, dim the separator
+	/^\|[ -:|]+\|$/ { printf "%s%s%s\n", dim, $0, off; next }
+	/^\|/ {
+		if (prev_was_table_sep == 0 && seen_table == 0) { printf "%s%s%s\n", b, $0, off; seen_table = 1; next }
+		print; next
+	}
+	{ seen_table = 0 }
+
+	/^[ ]*[-*] / { printf "%s\n", $0; next }
+	{ print }
+	' "$1" | sed -E \
+		-e 's/`([^`]+)`/\o033[36m\1\o033[0m/g' \
+		-e 's/\*\*([^*]+)\*\*/\o033[1m\1\o033[0m/g'
+}
+
+emit() {  # emit <file>
+	if [[ $RAW -eq 1 ]]; then cat "$1"; else render "$1"; fi
+}
+
+list_docs() {
+	printf '\n\033[1mCeremony documentation\033[0m\n'
+	printf '\033[2m%s\033[0m\n\n' "$DOCDIR"
+	local f n t
+	for f in "$DOCDIR"/*.md; do
+		[[ -e "$f" ]] || continue
+		n="$(basename "$f" .md)"
+		t="$(grep -m1 '^# ' "$f" | sed 's/^# //')"
+		printf '  \033[1m%-4s\033[0m %-22s %s\n' "${n%%-*}" "${n#*-}" "$t"
+	done
+	printf '\n'
+	for f in "$ROOTDIR/README.md" "$ROOTDIR/AGENTS.md"; do
+		[[ -r "$f" ]] || continue
+		n="$(basename "$f" .md)"
+		printf '  \033[1m%-4s\033[0m %-22s %s\n' "-" "$(echo "$n" | tr 'A-Z' 'a-z')" \
+			"$(grep -m1 '^# ' "$f" | sed 's/^# //')"
+	done
+	printf '\n  ceremony-guide <number|name>   ceremony-guide all\n\n'
+}
+
+resolve() {  # resolve <query> -> path or empty
+	local q="${1,,}" f n
+	case "$q" in
+		readme) [[ -r "$ROOTDIR/README.md" ]] && { echo "$ROOTDIR/README.md"; return; } ;;
+		agents) [[ -r "$ROOTDIR/AGENTS.md" ]] && { echo "$ROOTDIR/AGENTS.md"; return; } ;;
+	esac
+	# exact numeric prefix
+	for f in "$DOCDIR"/*.md; do
+		n="$(basename "$f" .md)"
+		[[ "${n%%-*}" == "$q" || "${n%%-*}" == "0$q" ]] && { echo "$f"; return; }
+	done
+	# name prefix match
+	for f in "$DOCDIR"/*.md; do
+		n="$(basename "$f" .md)"; n="${n#*-}"
+		[[ "$n" == "$q"* ]] && { echo "$f"; return; }
+	done
+}
+
+pager() {
+	if [[ $FORCE_PAGER -eq 1 || ( -t 1 && $RAW -eq 0 ) ]]; then
+		less -R -X -F
+	else
+		cat
+	fi
+}
+
+# --- dispatch ---------------------------------------------------------------
+if [[ $# -eq 0 || "${1:-}" == "list" ]]; then
+	list_docs
+	exit 0
+fi
+
+if [[ "${1:-}" == "all" ]]; then
+	{
+		for f in "$ROOTDIR/README.md" "$ROOTDIR/AGENTS.md" "$DOCDIR"/*.md; do
+			[[ -r "$f" ]] || continue
+			emit "$f"
+			printf '\n\n'
+		done
+	} | pager
+	exit 0
+fi
+
+DOC="$(resolve "$1")"
+if [[ -z "$DOC" ]]; then
+	echo "no document matching '$1'" >&2
+	list_docs >&2
+	exit 1
+fi
+
+emit "$DOC" | pager

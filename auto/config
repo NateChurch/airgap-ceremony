@@ -1,0 +1,60 @@
+#!/bin/sh
+# Single declarative source of truth for the air-gapped ceremony image.
+#
+# NOTE: the live user and hostname are set via live-config boot parameters in
+# --bootappend-live, NOT via lb config. Newer live-build removed --username and
+# --hostname; live-config reads username= and hostname= from the kernel command
+# line at boot instead.
+# Everything about the ISO is derived from this file plus config/package-lists/*.
+# Do not pass ad-hoc flags to `lb build` -- change this file instead.
+
+set -e
+
+: "${DEBIAN_SUITE:=trixie}"
+: "${MIRROR:=http://deb.debian.org/debian}"
+: "${SECURITY_MIRROR:=http://security.debian.org/debian-security}"
+: "${IMAGE_NAME:=airgap-ceremony}"
+
+# Firmware is OFF by default. A machine with no wifi firmware cannot associate
+# with an access point even if something tries. Structural guarantee, not policy.
+# Set INCLUDE_FIRMWARE=true only if the target laptop needs firmware for its
+# storage controller or GPU to reach a usable console.
+: "${INCLUDE_FIRMWARE:=false}"
+
+if [ "${INCLUDE_FIRMWARE}" = "true" ]; then
+	FIRMWARE_OPTS="--firmware-binary true --firmware-chroot true"
+	ARCHIVE_AREAS="main non-free-firmware"
+else
+	FIRMWARE_OPTS="--firmware-binary false --firmware-chroot false"
+	ARCHIVE_AREAS="main"
+fi
+
+lb config noauto \
+	--distribution "${DEBIAN_SUITE}" \
+	--parent-distribution "${DEBIAN_SUITE}" \
+	--archive-areas "${ARCHIVE_AREAS}" \
+	--parent-archive-areas "${ARCHIVE_AREAS}" \
+	--mirror-bootstrap "${MIRROR}" \
+	--mirror-chroot "${MIRROR}" \
+	--mirror-binary "${MIRROR}" \
+	--mirror-chroot-security "${SECURITY_MIRROR}" \
+	--mirror-binary-security "${SECURITY_MIRROR}" \
+	--architectures amd64 \
+	--linux-flavours amd64 \
+	--binary-images iso-hybrid \
+	--debian-installer none \
+	--win32-loader false \
+	--memtest none \
+	--apt-recommends false \
+	--apt-indices false \
+	--backports false \
+	--security true \
+	--updates true \
+	--checksums sha256 \
+	--iso-application "Air-Gapped Key Ceremony" \
+	--iso-volume "CEREMONY" \
+	--iso-publisher "fablab; https://github.com/; ceremony@localhost" \
+	--image-name "${IMAGE_NAME}" \
+	${FIRMWARE_OPTS} \
+	--bootappend-live "boot=live components username=ceremony user-fullname=Ceremony hostname=ceremony noswap noautomount nopersistence toram" \
+	"${@}"

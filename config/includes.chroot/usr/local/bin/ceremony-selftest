@@ -1,0 +1,222 @@
+#!/bin/bash
+# ceremony-selftest -- verify the environment before any key material exists.
+#
+# Principle: exit 0 from a boot is not proof the box is safe to hold secrets.
+# Every property this image claims is asserted here against live system state.
+# Run this and read the output BEFORE inserting a YubiKey or generating a key.
+#
+# Exit 0  = every assertion passed
+# Exit 1  = at least one FAIL; do not proceed with the ceremony
+# Exit 2  = only WARNs (things that are situational, e.g. no card inserted yet)
+
+set -uo pipefail
+
+# cryptsetup and friends live in /sbin, which is not on a non-root user's PATH
+# on Debian. Look where the binaries actually are rather than reporting a
+# present tool as missing.
+PATH="$PATH:/usr/sbin:/sbin"
+
+FAILURES=0
+WARNINGS=0
+MANIFEST=/usr/local/share/ceremony/manifest.txt
+
+c_pass=$'\033[32m'; c_fail=$'\033[31m'; c_warn=$'\033[33m'; c_off=$'\033[0m'
+[[ -t 1 ]] || { c_pass=""; c_fail=""; c_warn=""; c_off=""; }
+
+pass() { printf '  %sPASS%s  %s\n' "$c_pass" "$c_off" "$1"; }
+fail() { printf '  %sFAIL%s  %s\n' "$c_fail" "$c_off" "$1"; FAILURES=$((FAILURES+1)); }
+warn() { printf '  %sWARN%s  %s\n' "$c_warn" "$c_off" "$1"; WARNINGS=$((WARNINGS+1)); }
+section() { printf '\n\033[1m%s\033[0m\n' "$1"; }
+
+# ---------------------------------------------------------------------------
+section "Amnesia"
+
+if grep -qw toram /proc/cmdline; then
+	pass "booted with toram; removable medium can be pulled"
+else
+	fail "toram absent from /proc/cmdline -- the boot medium is still load-bearing"
+fi
+
+root_fs=$(findmnt -n -o FSTYPE / 2>/dev/null)
+case "$root_fs" in
+	overlay|tmpfs) pass "root filesystem is ${root_fs}, not a persistent disk" ;;
+	*)             fail "root filesystem is '${root_fs}' -- writes may be persisting" ;;
+esac
+
+if grep -qw nopersistence /proc/cmdline; then
+	pass "live persistence explicitly disabled"
+else
+	warn "nopersistence not on cmdline; a persistence partition could be honoured"
+fi
+
+# ---------------------------------------------------------------------------
+section "No swap"
+
+if [[ -z "$(swapon --show --noheadings 2>/dev/null)" ]]; then
+	pass "no swap active -- key material cannot be paged to disk"
+else
+	fail "swap is ACTIVE: $(swapon --show --noheadings | tr '\n' ' ')"
+fi
+
+# ---------------------------------------------------------------------------
+section "No persistent storage mounted"
+
+mounted_blk=$(findmnt -rn -o SOURCE,TARGET -t ext2,ext3,ext4,xfs,btrfs,vfat,exfat,ntfs 2>/dev/null \
+	| grep -v '/run/live/' || true)
+if [[ -z "$mounted_blk" ]]; then
+	pass "no fixed-disk filesystems mounted"
+else
+	warn "block filesystems mounted (expected only if you deliberately mounted a USB target):"
+	while read -r line; do [[ -n "$line" ]] && printf '          %s\n' "$line"; done <<<"$mounted_blk"
+fi
+
+# ---------------------------------------------------------------------------
+section "Air gap"
+
+net_up=0
+for ifpath in /sys/class/net/*; do
+	ifname=$(basename "$ifpath")
+	[[ "$ifname" == "lo" ]] && continue
+	state=$(cat "$ifpath/operstate" 2>/dev/null || echo unknown)
+	if [[ "$state" == "up" ]]; then
+		fail "interface ${ifname} is UP"
+		net_up=1
+	else
+		pass "interface ${ifname} is ${state}"
+	fi
+done
+[[ $net_up -eq 0 ]] && pass "no network interface is carrying traffic"
+
+if ip route show default 2>/dev/null | grep -q .; then
+	fail "a default route exists: $(ip route show default | head -1)"
+else
+	pass "no default route"
+fi
+
+for mod in cfg80211 mac80211 bluetooth btusb; do
+	if lsmod 2>/dev/null | awk '{print $1}' | grep -qx "$mod"; then
+		fail "module ${mod} is loaded despite blacklist"
+	fi
+done
+lsmod 2>/dev/null | awk '{print $1}' | grep -qxE 'cfg80211|mac80211|bluetooth|btusb' \
+	|| pass "802.11 and Bluetooth stacks not loaded"
+
+if [[ -d /lib/firmware ]] && find /lib/firmware -maxdepth 1 -type d \
+	\( -name 'iwlwifi*' -o -name 'ath*' -o -name 'rtw*' -o -name 'mrvl' -o -name 'brcm' \) \
+	2>/dev/null | grep -q .; then
+	warn "wifi firmware directories present in image (INCLUDE_FIRMWARE was true)"
+else
+	pass "no wifi firmware shipped in image"
+fi
+
+# ---------------------------------------------------------------------------
+section "Toolchain present"
+
+required=(
+	gpg gpg-agent gpg-connect-agent
+	ykman yubico-piv-tool pkcs15-tool opensc-tool
+	age age-keygen
+	ssh-keygen
+	ssss-split ssss-combine
+	qrencode zbarimg
+	paperkey
+	cryptsetup
+	shred
+	sops
+	openssl
+)
+missing=()
+for bin in "${required[@]}"; do
+	command -v "$bin" >/dev/null 2>&1 || missing+=("$bin")
+done
+if [[ ${#missing[@]} -eq 0 ]]; then
+	pass "all ${#required[@]} required binaries present"
+else
+	fail "missing binaries: ${missing[*]}"
+fi
+
+# ---------------------------------------------------------------------------
+section "Smartcard stack"
+
+if systemctl is-active --quiet pcscd 2>/dev/null || pgrep -x pcscd >/dev/null 2>&1; then
+	pass "pcscd is running"
+else
+	warn "pcscd not running (socket-activated; will start on first card access)"
+fi
+
+if grep -qx 'disable-ccid' /etc/gnupg/scdaemon.conf 2>/dev/null; then
+	pass "scdaemon configured to use pcscd, not its internal CCID driver"
+else
+	fail "scdaemon.conf missing 'disable-ccid' -- gpg and ykman will fight over the token"
+fi
+
+if ykman list 2>/dev/null | grep -q .; then
+	pass "YubiKey visible to ykman: $(ykman list 2>/dev/null | head -1)"
+	if gpg --card-status >/dev/null 2>&1; then
+		pass "gpg --card-status succeeds against the same token"
+	else
+		fail "ykman sees the token but gpg --card-status does not -- CCID contention"
+	fi
+else
+	warn "no YubiKey detected (insert one and re-run to validate the full path)"
+fi
+
+# ---------------------------------------------------------------------------
+section "SSH CA (PKCS#11)"
+
+# ceremony-ssh-ca.sh signs through ssh-keygen -D <ykcs11 module>. A missing
+# module means signing fails mid-ceremony with no network to recover.
+ykcs11_mod=$(ls /usr/lib/*/libykcs11.so* /usr/lib/libykcs11.so* 2>/dev/null | sort | head -1)
+if [[ -n "$ykcs11_mod" && -r "$ykcs11_mod" ]]; then
+	pass "ykcs11 PKCS#11 module present: ${ykcs11_mod}"
+else
+	fail "no readable libykcs11.so* under /usr/lib -- the 'ykcs11' package is missing from the image"
+fi
+
+# Reader count. Zero is a dead ceremony; more than one and ceremony-ssh-ca.sh
+# will refuse rather than guess which token it is about to write to.
+readers=$(opensc-tool --list-readers 2>/dev/null | grep -cE '^[[:space:]]*[0-9]+[[:space:]]' || true)
+case "$readers" in
+	1) pass "exactly one smartcard reader visible" ;;
+	0) warn "no smartcard reader visible (insert the YubiKey and re-run to validate)" ;;
+	*) fail "${readers} smartcard readers visible -- ceremony-ssh-ca.sh needs exactly one; remove all but the token you are provisioning" ;;
+esac
+
+# ---------------------------------------------------------------------------
+section "Entropy"
+
+avail=$(cat /proc/sys/kernel/random/entropy_avail 2>/dev/null || echo 0)
+if [[ "$avail" -ge 256 ]]; then
+	pass "entropy_avail = ${avail}"
+else
+	warn "entropy_avail = ${avail} (low; move the mouse or type before generating keys)"
+fi
+
+# ---------------------------------------------------------------------------
+section "Build provenance"
+
+if [[ -r "$MANIFEST" ]]; then
+	built=$(grep -m1 '^Built:' "$MANIFEST" | cut -d' ' -f2-)
+	suite=$(grep -m1 '^Suite:' "$MANIFEST" | cut -d' ' -f2-)
+	pkgs=$(grep -c '^ii ' "$MANIFEST" 2>/dev/null || echo 0)
+	pass "image manifest present: ${suite:-unknown}, built ${built:-unknown}, ${pkgs} packages"
+	printf '          full manifest: %s\n' "$MANIFEST"
+else
+	fail "no build manifest at ${MANIFEST} -- image provenance unverifiable"
+fi
+
+# ---------------------------------------------------------------------------
+printf '\n\033[1mResult\033[0m\n'
+if [[ $FAILURES -gt 0 ]]; then
+	printf '  %s%d FAILURE(S)%s, %d warning(s). DO NOT PROCEED with the ceremony.\n\n' \
+		"$c_fail" "$FAILURES" "$c_off" "$WARNINGS"
+	exit 1
+elif [[ $WARNINGS -gt 0 ]]; then
+	printf '  %s0 failures, %d warning(s).%s Read each warning before proceeding.\n\n' \
+		"$c_warn" "$WARNINGS" "$c_off"
+	exit 2
+else
+	printf '  %sAll checks passed.%s Environment is safe to hold key material.\n\n' \
+		"$c_pass" "$c_off"
+	exit 0
+fi

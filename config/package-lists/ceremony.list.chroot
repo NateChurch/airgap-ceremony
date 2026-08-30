@@ -1,0 +1,94 @@
+# Air-gapped key ceremony toolchain.
+# Everything here must be present on the ISO: the machine has no apt.
+# Anything you discover missing mid-ceremony is a rebuild, not an install.
+
+## --- smartcard stack -------------------------------------------------------
+# scdaemon and pcscd both want the CCID device. See etc/gnupg/scdaemon.conf --
+# GnuPG is configured to go through pcscd rather than its internal driver.
+gnupg
+scdaemon
+pcscd
+libccid
+opensc
+opensc-pkcs11
+pinentry-curses
+pinentry-tty
+
+## --- yubikey ---------------------------------------------------------------
+yubikey-manager
+yubico-piv-tool
+yubikey-personalization
+# PKCS#11 module (libykcs11.so*). ceremony-ssh-ca.sh signs SSH certificates
+# through `ssh-keygen -D <this module>`. On trixie the `ykcs11` package also
+# ships the unversioned libykcs11.so symlink; do NOT hardcode that path in
+# scripts regardless -- ceremony-lib.sh:ykcs11_module_path derives it, because
+# the location varies by distribution and release.
+ykcs11
+
+## --- age / ssh / secret splitting ------------------------------------------
+age
+openssh-client
+ssss
+paperkey
+
+## --- paper backup + transcription ------------------------------------------
+qrencode
+zbar-tools
+
+## --- write-once output media -----------------------------------------------
+# CD-R is the only medium here that cannot be silently rewritten afterwards.
+# Kernel support (usb-storage, sr_mod) is already present; these are userspace.
+xorriso
+dvd+rw-tools
+
+## --- live user creation ----------------------------------------------------
+# user-setup is only a Recommends of live-config, and --apt-recommends false
+# drops it. Without it live-config cannot create the live user and autologin
+# fails with "Authentication failure" against an account never made.
+user-setup
+live-tools
+uuid-runtime
+
+## --- initramfs compression -------------------------------------------------
+# Without zstd, update-initramfs falls back to gzip. Matters when toram is
+# decompressing ~300 MB on old hardware.
+zstd
+
+## --- entropy ---------------------------------------------------------------
+rng-tools5
+haveged
+
+## --- storage / removable media ---------------------------------------------
+cryptsetup
+cryptsetup-bin
+gdisk
+parted
+dosfstools
+exfatprogs
+udisks2
+rsync
+
+## --- integrity / inspection ------------------------------------------------
+coreutils
+diffutils
+hexedit
+xxd
+file
+tree
+pv
+
+## --- console usability -----------------------------------------------------
+console-setup
+keyboard-configuration
+kbd
+less
+vim-tiny
+nano
+tmux
+bash-completion
+sudo
+ca-certificates
+
+## --- password / passphrase generation --------------------------------------
+pwgen
+diceware

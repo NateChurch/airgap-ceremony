@@ -1,0 +1,17 @@
+#!/bin/sh
+# Write the exact package set into the image. The running system can then prove
+# what it is, and `make verify` can diff two builds.
+set -e
+
+mkdir -p /usr/local/share/ceremony
+MANIFEST=/usr/local/share/ceremony/manifest.txt
+
+{
+	printf 'Built: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+	printf 'Suite: %s\n' "$(. /etc/os-release 2>/dev/null && echo "${PRETTY_NAME:-unknown}")"
+	printf 'Kernel: %s\n' "$(ls /boot/vmlinuz-* 2>/dev/null | sed 's|.*vmlinuz-||' | tr '\n' ' ')"
+	printf '\n'
+	dpkg -l | grep '^ii '
+} > "${MANIFEST}"
+
+chmod 0444 "${MANIFEST}"

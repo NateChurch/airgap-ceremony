@@ -1,0 +1,13 @@
+# OPTIONAL: minimal X session, only if you want a graphical pinentry or a
+# browser-free GUI for reading QR codes off a phone screen via webcam.
+#
+# Rename to xorg.list.chroot to enable. Adds roughly 300 MB.
+# pinentry-curses is sufficient for every GnuPG operation; prefer console.
+xserver-xorg-core
+xserver-xorg-input-libinput
+xserver-xorg-video-fbdev
+xserver-xorg-video-vesa
+xinit
+i3-wm
+xterm
+pinentry-gnome3

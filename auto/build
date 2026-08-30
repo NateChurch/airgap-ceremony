@@ -1,0 +1,6 @@
+#!/bin/bash
+# Without pipefail, `tee` supplies the exit status and a failed `lb build`
+# looks like success. That produced three rounds of "no .iso produced despite
+# lb build exiting 0" while lb build was in fact failing honestly.
+set -euo pipefail
+lb build noauto "$@" 2>&1 | tee build.log

@@ -1,0 +1,15 @@
+# OPTIONAL: direct-attached USB printing for paper backups.
+#
+# Rename to printing.list.chroot to enable. Adds roughly 200-250 MB.
+#
+# Rationale: if you are printing recovery material (BitLocker keys, age
+# identity, Shamir shares), it must go from the air-gapped box to a
+# directly-attached USB printer. Writing a PDF to a USB stick and printing it
+# from a networked machine puts the plaintext on that machine's spool.
+cups-daemon
+cups-client
+cups-filters
+printer-driver-gutenprint
+printer-driver-hpcups
+enscript
+ghostscript

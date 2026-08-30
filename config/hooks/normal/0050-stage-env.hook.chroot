@@ -1,0 +1,14 @@
+#!/bin/sh
+# Placeholder: binaries.env is staged into the chroot by the Makefile before
+# `lb build` runs, via config/includes.chroot/tmp/binaries.env. This hook only
+# asserts it arrived, so a missing file fails here rather than confusingly
+# inside 0100.
+set -e
+if [ ! -r /tmp/binaries.env ]; then
+	echo "FATAL: /tmp/binaries.env not staged. Run the build via 'make build'." >&2
+	exit 1
+fi
+
+# It has done its job as a build-time gate; don't let a host build file with
+# no purpose in a running ceremony leak into the shipped image.
+rm -f /tmp/binaries.env

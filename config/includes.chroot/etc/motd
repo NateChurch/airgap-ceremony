@@ -1,0 +1,21 @@
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │  AIR-GAPPED KEY CEREMONY ENVIRONMENT                                 │
+  │                                                                      │
+  │  Before touching any key material, run:                              │
+  │                                                                      │
+  │      ceremony-selftest                                               │
+  │                                                                      │
+  │  It asserts amnesia, no-swap, air gap, toolchain, and smartcard      │
+  │  access against live system state. A clean boot is not proof.        │
+  │                                                                      │
+  │  Then read the documentation:                                        │
+  │                                                                      │
+  │      ceremony-guide            list documents                        │
+  │      ceremony-guide quickstart the short path                        │
+  │      ceremony-guide 1          THE RECOVERY MODEL -- read this       │
+  │                                                                      │
+  │  Docs also at ~/docs/ and on the ISO root. Manifest:                 │
+  │  /usr/local/share/ceremony/manifest.txt                              │
+  └──────────────────────────────────────────────────────────────────────┘
+

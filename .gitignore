@@ -1,0 +1,51 @@
+# Build products -- never committed. The config is the artifact.
+.build/
+cache/
+chroot/
+binary/
+/local/
+*.iso
+*.img
+*.log
+*.contents
+*.files
+*.packages
+artifacts/
+
+# live-build writes these from auto/config; they are generated, not authored.
+config/binary
+config/bootstrap
+config/chroot
+config/common
+config/source
+config/binary.d/
+config/bootstrap.d/
+config/chroot.d/
+config/common.d/
+config/source.d/
+
+# Real checksums file. The .example is committed; this is not, because it gets
+# edited per-build and a stale committed copy is worse than none.
+config/binaries.env
+
+# Build-time copy of binaries.env, staged into the chroot by `make build` for
+# 0050-stage-env.hook.chroot to check. Same secrets as config/binaries.env --
+# must never be committed.
+config/includes.chroot/tmp/
+
+# Staged build products -- fetched by scripts/stage-binaries.sh, not authored.
+config/includes.chroot/usr/local/bin/sops
+config/includes.chroot/usr/local/bin/talosctl
+config/includes.chroot/usr/local/share/ceremony/external-binaries.txt
+config/packages.chroot/
+
+# Generated documentation. docs-src/ is the single tracked source; these are
+# build products written by scripts/sync-docs.sh. Editing them instead of
+# docs-src is the mistake this ignore rule exists to make obvious.
+config/includes.binary/*.md
+config/includes.binary/docs/
+config/includes.chroot/etc/skel/*.md
+config/includes.chroot/etc/skel/docs/
+config/includes.chroot/usr/local/share/ceremony/*.md
+config/includes.chroot/usr/local/share/ceremony/docs/
+config/includes.chroot/usr/local/share/ceremony/docs.manifest

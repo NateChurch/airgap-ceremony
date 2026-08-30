@@ -1,0 +1,85 @@
+#!/bin/sh
+# Assert that host-staged binaries actually made it into the image.
+#
+# Fetching happens on the build host (scripts/stage-binaries.sh), not here.
+# This hook only verifies the result, because live-build copying
+# includes.chroot into place is a step that can silently do nothing if a path
+# is wrong -- and a missing sops would not surface until the middle of a
+# ceremony on a machine with no way to install it.
+
+set -e
+
+PROV=/usr/local/share/ceremony/external-binaries.txt
+
+if [ ! -r "$PROV" ]; then
+	echo "FATAL: ${PROV} missing -- binaries were never staged." >&2
+	echo "       Run 'make binaries' (or 'make build') rather than 'lb build'." >&2
+	exit 1
+fi
+
+missing=0
+while read -r name kind sha url; do
+	[ -n "$name" ] || continue
+	case "$kind" in
+		deb) continue ;;   # installed by apt from config/packages.chroot
+	esac
+	if [ ! -x "/usr/local/bin/${name}" ]; then
+		echo "FATAL: /usr/local/bin/${name} staged but not present in image" >&2
+		missing=1
+		continue
+	fi
+	actual=$(sha256sum "/usr/local/bin/${name}" | cut -d' ' -f1)
+	if [ "$actual" != "$sha" ]; then
+		echo "FATAL: /usr/local/bin/${name} hash differs from staged value" >&2
+		echo "       expected ${sha}" >&2
+		echo "       actual   ${actual}" >&2
+		missing=1
+		continue
+	fi
+	echo "ok: ${name} present and matches staged checksum"
+done < "$PROV"
+
+# The verification tool must not itself be the unverified thing. A lost exec
+# bit here is silent until someone tries to run it mid-ceremony.
+for f in ceremony-selftest ceremony-guide archive-ceremony.sh rehearse-recovery.sh; do
+	if [ ! -x "/usr/local/bin/${f}" ]; then
+		echo "FATAL: /usr/local/bin/${f} is not executable" >&2
+		echo "       chmod +x config/includes.chroot/usr/local/bin/${f}" >&2
+		missing=1
+	else
+		echo "ok: ${f} present and executable"
+	fi
+done
+
+# Documentation must ship in the image, not just in the git repo. The ceremony
+# machine has no network; a procedure that is not on the disc does not exist.
+#
+# Verified against docs.manifest, which scripts/sync-docs.sh derives from
+# docs-src at build time. A hardcoded list here was edited in three places
+# every time a document was added, and forgetting one produced a tree that
+# looked healthy while missing a file other documents referenced.
+MAN=/usr/local/share/ceremony/docs.manifest
+if [ ! -r "$MAN" ]; then
+	echo "FATAL: ${MAN} missing -- run 'make docs' (or 'make build') rather than 'lb build'" >&2
+	missing=1
+else
+	for d in /usr/local/share/ceremony /etc/skel; do
+		while read -r sum f; do
+			[ -n "$f" ] || continue
+			if [ ! -r "${d}/${f}" ]; then
+				echo "FATAL: ${d}/${f} missing (listed in docs.manifest)" >&2
+				missing=1
+				continue
+			fi
+			actual=$(sha256sum "${d}/${f}" | cut -d' ' -f1)
+			if [ "$actual" != "$sum" ]; then
+				echo "FATAL: ${d}/${f} does not match docs.manifest" >&2
+				missing=1
+			fi
+		done < "$MAN"
+	done
+	n=$(grep -c . "$MAN")
+	[ "$missing" -eq 0 ] && echo "ok: ${n} documents verified against manifest"
+fi
+
+[ "$missing" -eq 0 ] || exit 1

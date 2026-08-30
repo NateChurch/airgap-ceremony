@@ -1,0 +1,39 @@
+#!/bin/sh
+# Remove and mask anything that could bring a network up, and disable services
+# that write state. Belt-and-braces on top of the module blacklist.
+set -e
+
+for unit in \
+	systemd-networkd.service systemd-networkd.socket \
+	systemd-resolved.service \
+	systemd-timesyncd.service \
+	NetworkManager.service \
+	wpa_supplicant.service \
+	bluetooth.service \
+	ssh.service sshd.service \
+	avahi-daemon.service avahi-daemon.socket \
+	ModemManager.service
+do
+	systemctl mask "${unit}" 2>/dev/null || true
+done
+
+# No MOTD news, no phone-home, no popcon.
+rm -f /etc/apt/apt.conf.d/*periodic* 2>/dev/null || true
+echo 'APT::Periodic::Enable "0";' > /etc/apt/apt.conf.d/99-airgap-no-periodic
+
+# Core dumps can contain key material.
+mkdir -p /etc/security
+printf '* hard core 0\n* soft core 0\n' >> /etc/security/limits.conf
+mkdir -p /etc/sysctl.d
+cat > /etc/sysctl.d/99-airgap.conf <<'SYSCTL'
+kernel.core_pattern=|/bin/false
+fs.suid_dumpable=0
+kernel.dmesg_restrict=1
+kernel.kptr_restrict=2
+SYSCTL
+
+# The live user gets passwordless sudo; there is no meaningful local threat
+# model on an amnesiac single-user box and a forgotten password is a dead end.
+mkdir -p /etc/sudoers.d
+echo 'ceremony ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/ceremony
+chmod 0440 /etc/sudoers.d/ceremony
