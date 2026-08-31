@@ -3,19 +3,16 @@
 Every physical and digital object this system produces or depends on: what it
 is, what it is for, what it can and cannot recover, and what gets printed.
 
-Fill in the blanks as you perform ceremonies. An artifact whose purpose nobody
-remembers is functionally lost.
+An artifact whose purpose nobody remembers is functionally lost — record each
+one on the durable inventory, `docs/11-inventory.md`, as you produce it.
 
 ---
 
 ## Hardware tokens
 
-Four YubiKeys, Series 5 only, firmware 5.7 or later.
-
-Firmware 5.7+ is a security requirement, not a preference: EUCLEAK
-(CVE-2024-45678) affects earlier firmware, and YubiKey firmware cannot be
-updated after manufacture. Buy direct from Yubico. Security Key, Bio, and FIPS
-lines are excluded — they lack the PIV or OpenPGP applets used here.
+Four YubiKeys, Series 5 only, firmware 5.7 or later. Buying and verifying them
+is a prerequisite, not a ceremony step — see `docs/02-prerequisites.md`, which
+also explains why firmware 5.7 is a hard floor.
 
 ### Key 1 — daily carry
 
@@ -25,7 +22,7 @@ lines are excluded — they lack the PIV or OpenPGP applets used here.
 | Used for | Day-to-day signing, SSH auth, web passkeys |
 | Location | On your person |
 | If lost | Revoke subkeys, reprovision from the GPG master key |
-| Recoverable from | Key 2 (identical), or master key + `docs/03` |
+| Recoverable from | Key 2 (identical), or master key + `docs/04` |
 
 Expected to be lost eventually. Everything on it is replaceable — that is the
 design.
@@ -35,7 +32,7 @@ design.
 | | |
 |---|---|
 | Holds | Identical provisioning to Key 1 |
-| Location | Gun safe |
+| Location | Location A — secured, at home |
 | Purpose | Continue working the same day Key 1 is lost |
 
 Provision at the same time as Key 1, from the same master key, in one ceremony.
@@ -46,8 +43,8 @@ Provision at the same time as Key 1, from the same master key, in one ceremony.
 |---|---|
 | Holds | SSH user CA (PIV slot 9c), SSH host CA (PIV slot 9a), age identity |
 | Used for | Signing SSH certificates; decrypting SOPS-encrypted state |
-| Location | Desk drawer |
-| Twin | Bank safety deposit box — **same CA keys** (imported), own PIN/PUK/mgmt key |
+| Location | Daily-use storage — not part of the 2-of-3 split |
+| Twin | Location B — off-site, **same CA keys** (imported), own PIN/PUK/mgmt key |
 | If both lost | Rebuild CAs from the encrypted archive; reissue all certificates |
 
 The most consequential key. Both CA slots require a PIN on every operation
@@ -57,7 +54,7 @@ slot 9c (user CA) caches the touch for 15 seconds — user certificates are
 signed in batches and the cache makes a run workable.
 
 The CA private keys are generated off-card and are in the encrypted archive.
-See `docs/10-ssh-ca.md`.
+See `docs/05-ssh-ca.md`.
 
 ### Key 4 — break-glass
 
@@ -65,7 +62,7 @@ See `docs/10-ssh-ca.md`.
 |---|---|
 | Holds | FIDO2 only, no PIV, no OpenPGP |
 | Used for | Account recovery when Keys 1 and 2 are both unavailable |
-| Location | Gun safe |
+| Location | Location A — secured, at home |
 
 Deliberately minimal. It exists so that losing your carry key does not lock you
 out of the accounts needed to fix the situation.
@@ -79,7 +76,7 @@ out of the accounts needed to fix the situation.
 | | |
 |---|---|
 | Form | `AGE-SECRET-KEY-…`, one line |
-| Used for | SOPS decryption of Terraform state, Talos cluster CA, secrets in `fablab` |
+| Used for | SOPS decryption of Terraform state, Talos cluster CA, secrets in your infrastructure repo |
 | Lives on | Key 3 (and twin), plus the encrypted archive |
 | Recovers | Talos CA, SOPS-encrypted repository content |
 | Recovered by | 2-of-3 passphrase shares + any ceremony CD-R |
@@ -110,10 +107,10 @@ persistent storage in plaintext.
 | Recovers | Nothing else — they are leaves |
 | Recovered by | Either token, **or** 2-of-3 passphrase shares + any ceremony CD-R |
 
-Off-card generation because the bank-box twin must carry the **same** CA key
+Off-card generation because the off-site twin must carry the **same** CA key
 and a YubiKey cannot export one generated on it. The keys are archived, so
 losing both tokens is a re-import from the archive, not a fleet-wide
-certificate reissue. Full procedure: `docs/10-ssh-ca.md`.
+certificate reissue. Full procedure: `docs/05-ssh-ca.md`.
 
 ### PIV secrets (PIN, PUK, management key)
 
@@ -149,15 +146,24 @@ tooling.
 
 | Printout | Contents | Copies | Where |
 |---|---|---|---|
-| Passphrase share A | One `ssss` share, handwritten + QR | 1 | Home safe |
-| Passphrase share B | One `ssss` share, handwritten + QR | 1 | Bank box |
-| Passphrase share C | One `ssss` share, handwritten + QR, **plus instructions** | 1 | Trusted family member |
+| Passphrase share A | One `ssss` share, handwritten + QR | 1 | Location A |
+| Passphrase share B | One `ssss` share, handwritten + QR | 1 | Location B |
+| Passphrase share C | One `ssss` share, handwritten + QR, **plus instructions** | 1 | Location C |
 | Recovery procedure | `docs/` printed | 2 | With each CD-R |
-| paperkey output | GPG master key secret portion | 1–2 | Home safe, bank box |
-| BitLocker recovery keys | One per encrypted volume | 1 | Home safe |
-| Artifact inventory | This document, filled in | 2 | Home safe, bank box |
+| paperkey output | GPG master key secret portion | 1–2 | Locations A and B |
+| BitLocker recovery keys | One per encrypted volume | 1 | Location A |
+| Durable inventory | `docs/11-inventory.md`, filled in | 2 | Locations A and B |
+| Planning worksheet | `docs/02-prerequisites.md`, filled in | 1 | Location A |
 
-### On the family member's share
+The share cards are cut from `docs/10-worksheet.md`; the inventory and the
+planning worksheet are separate documents so that no single page carries both
+a passphrase and the address of a disc.
+
+Locations A, B and C are defined in `docs/02-prerequisites.md`, which is also
+where the real places get written down. Distribution and estate planning:
+`docs/06-storage.md`.
+
+### On the Location C share
 
 A hex string with no context will be thrown away. Include, in plain language:
 what it is, that it is useless alone, who to give it to, and under what
@@ -187,7 +193,7 @@ handwriting is ambiguous. Neither is a single point of failure.
 | Medium | Holds | Lifetime | Notes |
 |---|---|---|---|
 | Ceremony CD-R | `payload.tar.age` + docs | Decades if stored dark and cool | Write-once; cannot be securely erased |
-| Environment ISO | This system | Rebuildable from `fablab` at any time | Contains no secrets |
+| Environment ISO | This system | Rebuildable from the config repo at any time | Contains no secrets |
 | YubiKey | See above | Indefinite, but firmware is fixed at manufacture | Cannot be backed up — only duplicated at provisioning time |
 
 Re-verify CD-Rs annually. Dye degrades, and you want to discover that while you
@@ -195,36 +201,19 @@ still have the material to burn a replacement.
 
 ---
 
-## Inventory
+## The record
 
-Fill in and print. Two copies.
+None of the above is any use if nobody remembers what it was for. Two separate
+sheets carry that, and they are separate on purpose:
 
-```
-Ceremony date:        ____________________
-Image build:          ____________________  (from manifest.txt)
-Operator:             ____________________
+| Sheet | Holds | Secret? |
+|---|---|---|
+| `docs/11-inventory.md` | Serials, public keys, fingerprints, which location holds what | No — store it with the discs |
+| `docs/02-prerequisites.md`, planning worksheet | Which real place is Location A, B and C | No keys, but it maps labels to places — keep it at Location A |
 
-Key 1 serial:         ____________  provisioned: ________  location: ____________
-Key 2 serial:         ____________  provisioned: ________  location: ____________
-Key 3 serial:         ____________  provisioned: ________  location: ____________
-Key 3 twin serial:    ____________  provisioned: ________  location: ____________
-Key 4 serial:         ____________  provisioned: ________  location: ____________
+Fill the inventory in during the ceremony and print two copies, for Locations A
+and B. It is the document an executor actually reads.
 
-age public key:       ____________________________________________
-GPG master fpr:       ____________________________________________
-SSH user CA fpr:      ____________________________________________
-SSH host CA fpr:      ____________________________________________
-
-CD-R 1 label:         ____________  burned: ________  location: ____________
-CD-R 2 label:         ____________  burned: ________  location: ____________
-Share A location:     ____________________
-Share B location:     ____________________
-Share C holder:       ____________________
-
-Rehearsal passed:     [ ] yes    date: ________
-Last CD-R re-verify:  ________
-```
-
-Public keys and fingerprints are safe to record in plaintext. Nothing in this
-inventory is secret — that is why it can be printed and stored openly, and why
-it is useful to an executor.
+The third sheet, `docs/10-worksheet.md`, carries the passphrase and the shares
+and does **not** survive the ceremony intact — its scratch page is destroyed in
+the room and its share cards leave separately.

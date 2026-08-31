@@ -4,7 +4,12 @@ The short path. Full detail is in the numbered documents that follow.
 
 ## First time?
 
-Do a sacrificial run with fake material before trusting this with anything:
+Read `docs/02-prerequisites.md` first — hardware, media, the three storage
+locations, and the forms to print. Most of it cannot be arranged from this
+machine, which has no network.
+
+Then do a sacrificial run with fake material before trusting this with
+anything:
 
 ```sh
 make dry-run
@@ -28,7 +33,7 @@ cannot be written to.
 
 Work in `/tmp/ceremony/`. It is tmpfs; nothing survives power-off.
 
-See `docs/03-ceremonies.md` for the specific procedure. Do not improvise the
+See `docs/04-ceremonies.md` for the specific procedure. Do not improvise the
 commands — the details matter and the failures are silent.
 
 ## Archive
@@ -60,6 +65,8 @@ A backup you have never restored is a hypothesis.
 
 1. Confirm the rehearsal passed
 2. Burn a second copy
-3. Record locations on paper (`docs/04-storage.md` has the table)
-4. Destroy the scratch paper with the full passphrase
-5. Power off — do not reboot into anything else first
+3. Fill in the durable inventory (`docs/11-inventory.md`) — serials,
+   fingerprints, which location holds what
+4. Destroy the scratch paper with the full passphrase (worksheet Section 1)
+5. Cut apart the share cards and send them to three different places
+6. Power off — do not reboot into anything else first

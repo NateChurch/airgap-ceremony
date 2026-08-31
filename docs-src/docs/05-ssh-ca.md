@@ -19,7 +19,8 @@ guessing.
 | PIV PIN, PUK, management key | One set **per token**, in the encrypted archive |
 | `ssh-ca-fingerprints.txt` | The archive (not secret — a record) |
 
-Two tokens: Key 3 and its bank-box twin. They carry the **same** CA keys —
+Two tokens: Key 3 and its off-site twin at Location B. They carry the **same**
+CA keys —
 that is the point of a twin — but **different** PIN/PUK/management keys.
 
 ### Why off-card generation
@@ -70,11 +71,13 @@ Do not change it.
 
 3. A blank **CD-R** (not CD-RW) in the burner.
 
-4. The printed worksheet (`ceremony-guide --print 9`), Sections 1–3.
+4. The printed ceremony worksheet (`docs/10-worksheet.md`), both sections, and
+   the blank durable inventory (`docs/11-inventory.md`).
 
-5. Decide the three passphrase-share locations and the twin's location **now**,
+5. The planning worksheet in `docs/02-prerequisites.md`, already filled in —
+   the three passphrase-share locations and the twin's location decided **now**,
    on paper. The script will ask, and will stop if the twin's location matches
-   a share's — see below.
+   a share's; see below.
 
 ---
 
@@ -94,8 +97,9 @@ The script walks these phases. Each one stops the ceremony if it fails.
 ### 1. Concentration-risk check
 
 It asks for the physical location of the Key 3 twin and of each passphrase
-share. Answer with the same wording each time — "bank box", not "the bank"
-once and "SDB" the next.
+share. Answer with the wording you wrote on the planning worksheet
+(`docs/02-prerequisites.md`), and use it identically every time — not one
+abbreviation now and a different one later.
 
 If the twin's location matches any share's location, it **stops**. One place
 must not hold both a spare CA token and enough shares to rebuild the archive
@@ -109,7 +113,7 @@ Fix the distribution, or record the real distinct locations, and re-run.
 ### 2. Key generation
 
 Off-card, in tmpfs. Nothing to do. It prints each CA's fingerprint — write
-both on worksheet Section 3.
+both on the durable inventory (`docs/11-inventory.md`).
 
 ### 3. Per token: PIN, PUK, management key — then import
 
@@ -146,7 +150,7 @@ The script hands the CA private keys and the PIV secrets to
 `age -p` (you transcribe the passphrase and type it back — from your paper,
 not the screen), the Shamir split, the burn, and a read-back.
 
-Follow `docs/03-ceremonies.md` "Archiving" and the worksheet for the
+Follow `docs/04-ceremonies.md` "Archiving" and the worksheet for the
 passphrase and shares. Everything there applies unchanged.
 
 ### 6. Recovery proof
@@ -166,9 +170,10 @@ and can be re-burned. After power-off it is gone.
 ### 7. Before you leave
 
 - Burn a **second** CD-R.
-- Fill in worksheet Section 3: both serials, both CA fingerprints, the twin
-  location, and tick the twin-vs-share box.
-- **Destroy worksheet Section 1** — it carried the passphrase.
+- Fill in the durable inventory (`docs/11-inventory.md`): both serials, both CA
+  fingerprints, the twin location, and tick the twin-vs-share box.
+- **Destroy ceremony worksheet Section 1** — it carried the passphrase.
+- Cut apart and disperse the Section 2 share cards.
 - The CA **public** keys still need to go into the fleet's trust config. This
   ceremony does not do that.
 - Power off.
@@ -203,7 +208,7 @@ Recovery needs neither this ISO nor a YubiKey. That independence is deliberate.
 ### `ykcs11 PKCS#11 module not found`
 
 The image was built without the `ykcs11` package. It cannot be added here.
-Rebuild — see `docs/06-image-build.md`.
+Rebuild — see `docs/08-image-build.md`.
 
 ### `More than one reader is present`
 

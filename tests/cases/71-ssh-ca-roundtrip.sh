@@ -19,8 +19,8 @@ trap 'rm -rf "$D"' RETURN
 rc_of() { ( "$@" ) >/dev/null 2>&1; echo $?; }
 
 # --- a real P-256 CA, exactly as the ceremony generates it -----------
-ssh-keygen -q -t ecdsa -b 256 -N '' -C fablab-ssh-user-ca -f "$D/user-ca"
-ssh-keygen -q -t ecdsa -b 256 -N '' -C fablab-ssh-host-ca -f "$D/host-ca"
+ssh-keygen -q -t ecdsa -b 256 -N '' -C ceremony-ssh-user-ca -f "$D/user-ca"
+ssh-keygen -q -t ecdsa -b 256 -N '' -C ceremony-ssh-host-ca -f "$D/host-ca"
 ssh-keygen -q -t ed25519 -N '' -C throwaway -f "$D/target"
 USER_FPR="$(ssh-keygen -l -f "$D/user-ca.pub" | awk '{print $2}')"
 HOST_FPR="$(ssh-keygen -l -f "$D/host-ca.pub" | awk '{print $2}')"

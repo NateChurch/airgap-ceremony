@@ -1,20 +1,34 @@
 # Ceremony worksheet
 
-Print this before you start (`ceremony-guide --print 7`). It has three parts
-with different lifetimes — do not treat it as one sheet. Cut along the rule
-lines and separate the parts as you finish each ceremony:
+The sheet you carry into the room. Print it blank **before** the ceremony —
+either from an ordinary machine, or from this one if printing was enabled at
+build time (`docs/12-appendix.md`). `ceremony-guide -r 10 > worksheet.txt`
+gives you the raw text.
 
-- **Section 1 — SCRATCH.** Working notes needed only during the ceremony.
-  Destroyed before you leave the room.
+**Everything on this worksheet is secret.** It carries the passphrase and the
+shares. It has two parts with different lifetimes — do not treat it as one
+sheet. Cut along the rule lines and separate the parts before you leave:
+
+- **Section 1 — SCRATCH.** Working notes needed only during the ceremony,
+  including the full passphrase. Destroyed in the room, before you leave.
 - **Section 2 — SHARE CARDS.** One card per passphrase share. Separated
   immediately and sent to three different locations. Never stored together,
-  and never stored with Section 1 or with each other.
-- **Section 3 — DURABLE INVENTORY.** Contains nothing secret. Safe to store
-  alongside the discs, and the sheet an executor actually needs.
+  never stored with Section 1, and never stored with each other.
 
 A page holding both the full passphrase and where a disc lives defeats the
-2-of-3 split — anyone who finds it has everything. Keeping these separate is
-the entire point of this worksheet.
+2-of-3 split — anyone who finds it has everything. Keeping these apart is the
+entire point of cutting this sheet up.
+
+The two companion forms are deliberately **separate documents**, not sections
+here, so that the secret and non-secret material never share a page:
+
+| Form | When | Fate |
+|---|---|---|
+| Planning worksheet — `docs/02-prerequisites.md` | Filled in before the ceremony | Kept; holds no keys |
+| **This worksheet** | Filled in during the ceremony | Section 1 destroyed, Section 2 dispersed |
+| Durable inventory — `docs/11-inventory.md` | Filled in during and after | Kept with the discs; holds no keys |
+
+Record serials, fingerprints and locations on the **inventory**, not here.
 
 ================================================================================
 SECTION 1 — SCRATCH
@@ -64,7 +78,7 @@ Share C: ________________________________________________________________
 Result:   [ ] PASS      [ ] FAIL
 
 If FAIL: fix it now, while the material is still in tmpfs. See
-`docs/05-troubleshooting.md`. Do not leave the room on a FAIL.
+`docs/07-troubleshooting.md`. Do not leave the room on a FAIL.
 
 ## SSH CA ceremony only (`ceremony-ssh-ca.sh`)
 
@@ -202,104 +216,13 @@ Threshold reminder: **2 of 3 shares are required.** Holding this card alone
 recovers nothing. Keep it sealed and stored safely, and tell no one but the
 contact above where it is.
 
+--------------------------------------------------------------------------------
+
+END OF WORKSHEET. Before you leave the room:
+
+  [ ] Section 1 destroyed — shredded or burned, not filed
+  [ ] Three share cards cut apart, sealed, and going to three different places
+  [ ] Serials, fingerprints and locations written on the durable inventory
+      (`docs/11-inventory.md`), which is a different sheet and stays
+
 ================================================================================
-
-
-SECTION 3 — DURABLE INVENTORY
-Contains nothing secret. Safe to store with the discs.
-================================================================================
-
-## Ceremony
-
-Ceremony date:          ____________________
-
-Operator:               ____________________
-
-Image build identifier: ____________________________________________
-  (from `/usr/local/share/ceremony/manifest.txt` — the `Built:` line)
-
-## Hardware tokens
-
-Key 1 serial:        ______________  provisioned: __________  location: on person
-
-Key 2 serial:        ______________  provisioned: __________  location: __________
-
-Key 3 serial:        ______________  provisioned: __________  location: __________
-
-Key 3 twin serial:   ______________  provisioned: __________  location: __________
-
-Key 4 serial:        ______________  provisioned: __________  location: __________
-
-## Public keys and fingerprints (not secret)
-
-age public key:      ________________________________________________________
-
-GPG master fpr:      ________________________________________________________
-
-SSH user CA fpr:     ________________________________________________________
-
-SSH host CA fpr:     ________________________________________________________
-
-  (SSH CA private keys and each token's PIV PIN/PUK/management key are in the
-   encrypted archive, not here. Nothing on this page is secret.)
-
-## Media
-
-CD-R 1 label: ____________  burned: __________  location: __________________
-
-CD-R 2 label: ____________  burned: __________  location: __________________
-
-## Your locations (see `docs/04-storage.md`)
-
-Location A — frequently accessed, physically secured, at home
-
-  Real place:  ________________________________________________________
-
-  Holds: CD-R 1, share A, Key 2, Key 4, paperkey, BitLocker keys, this inventory
-
-Location B — off-site, disaster-resistant, infrequently accessed
-
-  Real place:  ________________________________________________________
-
-  Holds: CD-R 2, share B, Key 3 twin, this inventory
-
-Location C — held by someone you trust, for when A and B are both unavailable
-
-  Holder:      ________________________________________________________
-
-  Contact:     ________________________________________________________
-
-Daily-use storage — wherever Key 3 lives day to day, not part of the split
-
-  Real place:  ________________________________________________________
-
-## Confirmations
-
-[ ] Rehearsal passed — date: __________________
-
-[ ] Section 1 (scratch page carrying the full passphrase) was destroyed
-
-[ ] Second CD-R burned and stored at the location above
-
-[ ] Annual re-verify date set: __________________
-
-SSH CA ceremony only:
-
-[ ] Both tokens signed and verified; recovery proof matched both
-
-[ ] Key 3 twin location differs from every passphrase-share location
-    (`ceremony-ssh-ca.sh` refuses to proceed otherwise — tick to confirm
-    you did not work around it)
-
-## Notes
-
-________________________________________________________________________
-
-________________________________________________________________________
-
-________________________________________________________________________
-
-Nothing above this line is secret — it is public keys, serial numbers, dates,
-and where things are. That is exactly why it can be printed, stored openly
-alongside the discs, and handed to an executor who has none of your other
-context.

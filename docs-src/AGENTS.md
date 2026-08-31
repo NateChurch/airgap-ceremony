@@ -40,7 +40,7 @@ These are not stylistic preferences.
    the operator and stop.
 
 4. **Do not decrypt anything unprompted.** If the operator asks you to help
-   with recovery, walk them through `docs/03-ceremonies.md` and let them handle
+   with recovery, walk them through `docs/04-ceremonies.md` and let them handle
    passphrases and shares. Never ask for a passphrase or a Shamir share, and
    never accept one if offered — you have no way to hold it safely.
 
@@ -56,13 +56,16 @@ These are not stylistic preferences.
 |---|---|
 | What is on this disc? | `README.md` |
 | Why is the encryption structured this way? | `docs/01-recovery-model.md` |
-| What is this key for? | `docs/02-artifacts.md` |
-| How do I run/resume a ceremony? | `docs/03-ceremonies.md` |
-| How does the SSH CA ceremony work? | `docs/10-ssh-ca.md` |
-| Where does this artifact physically live? | `docs/04-storage.md` |
-| A check is failing | `docs/05-troubleshooting.md` |
-| How was this image built? | `docs/06-image-build.md` |
-| How do I test a change? | `docs/07-testing.md` |
+| What do I need before starting? What is "Location A"? | `docs/02-prerequisites.md` |
+| What is this key for? | `docs/03-artifacts.md` |
+| How do I run/resume a ceremony? | `docs/04-ceremonies.md` |
+| How does the SSH CA ceremony work? | `docs/05-ssh-ca.md` |
+| Where does this artifact physically live? | `docs/06-storage.md` |
+| What gets written on paper? | `docs/10-worksheet.md`, `docs/11-inventory.md` |
+| What is the raw command under this script? | `docs/12-appendix.md` |
+| A check is failing | `docs/07-troubleshooting.md` |
+| How was this image built? | `docs/08-image-build.md` |
+| How do I test a change? | `docs/09-testing.md` |
 | What exactly was installed? | `/usr/local/share/ceremony/manifest.txt` |
 
 ## The single most important idea
@@ -79,13 +82,15 @@ treatment and a table of the ways it goes wrong.
 
 ## Useful things you can do
 
-- Explain what a given artifact is for, from `docs/02-artifacts.md`
+- Explain what a given artifact is for, from `docs/03-artifacts.md`
 - Help interpret a `ceremony-selftest` failure
 - Review a proposed procedure change against the recovery-model rule
-- Help reconstruct the dependency table in `docs/04-storage.md` from what the
+- Help reconstruct the dependency table in `docs/06-storage.md` from what the
   operator can find
+- Explain what Locations A, B and C mean, from `docs/02-prerequisites.md`, and
+  check a proposed distribution against the 2-of-3 property
 - Explain `age`, `ssss`, `paperkey`, or PIV slot semantics
-- Explain the SSH CA flow from `docs/10-ssh-ca.md` — off-card P-256 keygen,
+- Explain the SSH CA flow from `docs/05-ssh-ca.md` — off-card P-256 keygen,
   import to two tokens, PIV PIN/PUK/management key archived per token
 
 ## Things you should decline

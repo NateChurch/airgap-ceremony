@@ -1,6 +1,6 @@
 # Building this image
 
-The image is built from the `airgap-ceremony` tree in the `fablab` monorepo.
+The image is built from the `airgap-ceremony` tree.
 Everything about it is declared in `auto/config` and `config/package-lists/`.
 
 ---
@@ -88,7 +88,7 @@ make test-all    # tier 2, needs age + ssss
 make dry-run     # tier 3, real hardware, sacrificial ceremony
 ```
 
-See `docs/07-testing.md`. Tier 3 is deliberately not automated — mocking a
+See `docs/09-testing.md`. Tier 3 is deliberately not automated — mocking a
 terminal, a burner, or a token tests the mock.
 
 ## Verifying an image

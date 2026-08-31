@@ -29,7 +29,7 @@ mv config/package-lists/printing.list.chroot.disabled \
 make purge && make build
 ```
 
-See `docs/06-image-build.md` for the full build procedure. Do this in
+See `docs/08-image-build.md` for the full build procedure. Do this in
 advance — you cannot install a package on the booted ceremony machine.
 
 ### Checking the printer is seen
@@ -54,17 +54,19 @@ lpstat -p -d                              # confirm idle, set default
 ### Printing pages, including the guide
 
 ```sh
-ceremony-guide --print 7 > worksheet.txt   # raw text, no ANSI -- see ceremony-guide -h
+ceremony-guide -r 10 > worksheet.txt    # ceremony worksheet, raw text, no ANSI
+ceremony-guide -r 11 > inventory.txt    # durable inventory
+ceremony-guide -r 02 > planning.txt     # prerequisites + planning worksheet
 lp worksheet.txt
 lpr worksheet.txt                          # older alias, same daemon
 lpq                                        # see the queue
 cancel <job-id>                            # or: lprm <job-id>
 ```
 
-*(script: `ceremony-guide`'s `--print`/`-w` flag produces the text these
-commands send to the printer — the flag itself does not print anything. The
-commands above are the rest of the path, for backup purposes if you're
-printing outside of a simple pipe.)*
+*(script: `ceremony-guide -r` emits the raw markdown that these commands send
+to the printer — it does not print anything itself. The commands above are the
+rest of the path. Print the blank forms **before** the ceremony where you can;
+`docs/02-prerequisites.md` lists which three you need.)*
 
 ### Printing images, including QR codes
 
@@ -74,7 +76,7 @@ lp /tmp/share-a.png
 ```
 
 *(script: none — the QR step is a manual part of the ceremony described in
-`docs/02-artifacts.md`, "On QR codes". Printed here for backup purposes:
+`docs/03-artifacts.md`, "On QR codes". Printed here for backup purposes:
 this is the command that gets the generated image onto paper.)*
 
 ### No printer attached — write a portable file instead
@@ -126,7 +128,7 @@ States the media type in plain text, e.g. `Mounted Media: 09h, CD-R`.
 *(script: none — `archive-ceremony.sh` assumes `/dev/sr0` already holds
 blank write-once media and does not check the media type itself. Run this by
 hand before every burn, and whenever you re-verify an old disc per the
-"re-verify CD-Rs annually" note in `docs/02-artifacts.md`.)*
+"re-verify CD-Rs annually" note in `docs/03-artifacts.md`.)*
 
 ### Reading a disc / verifying its contents
 
@@ -171,7 +173,7 @@ check and round-trip verification exist to guard. Prefer
 `archive-ceremony.sh` / `rehearse-recovery.sh`. Use the raw commands to
 verify a single ciphertext, or to recover on a future machine that has only
 `age` and `ssss` installed — which is exactly the scenario
-`docs/03-ceremonies.md`'s "Recovery" section describes.
+`docs/04-ceremonies.md`'s "Recovery" section describes.
 
 ### Encrypt with a passphrase (the default)
 
@@ -204,7 +206,7 @@ age -d -i age-identity.txt -o payload.tar payload.tar.age    # recipient mode
 ```
 
 *(script: `rehearse-recovery.sh`, "Decrypt" step; also
-`docs/03-ceremonies.md`, "Recovery" step 4 — the form meant for a future
+`docs/04-ceremonies.md`, "Recovery" step 4 — the form meant for a future
 machine that isn't this image at all.)*
 
 ### Split / reconstruct a passphrase
@@ -232,7 +234,7 @@ gpg --export-secret-keys --armor <KEYID> > gpg-master-secret.asc
 gpg --export-secret-keys <KEYID> | paperkey --output gpg-master-paperkey.txt
 ```
 
-*(script: none — a manual ceremony step, described in `docs/03-ceremonies.md`,
+*(script: none — a manual ceremony step, described in `docs/04-ceremonies.md`,
 Ceremony B. Included here because paperkey output is, along with the
 passphrase shares, one of the two things this whole appendix exists to help
 you reproduce or verify by hand for backup purposes.)*

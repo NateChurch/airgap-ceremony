@@ -53,7 +53,7 @@ lb config noauto \
 	--checksums sha256 \
 	--iso-application "Air-Gapped Key Ceremony" \
 	--iso-volume "CEREMONY" \
-	--iso-publisher "fablab; https://github.com/; ceremony@localhost" \
+	--iso-publisher "airgap-ceremony; https://github.com/; ceremony@localhost" \
 	--image-name "${IMAGE_NAME}" \
 	${FIRMWARE_OPTS} \
 	--bootappend-live "boot=live components username=ceremony user-fullname=Ceremony hostname=ceremony noswap noautomount nopersistence toram" \

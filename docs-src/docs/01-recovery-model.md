@@ -20,7 +20,7 @@ Concrete ways to get it wrong, all of which look reasonable at 11pm:
 | Encrypt the age identity backup to its own public key | You need the identity to decrypt the identity |
 | Encrypt backups to a GPG key that lives only on a YubiKey | YubiKey lost is the case you're backing up against |
 | Store the passphrase in a password manager unlocked by that YubiKey | Same circle, one step longer |
-| SOPS-encrypt the age identity into the fablab repo | SOPS uses that identity to decrypt |
+| SOPS-encrypt the age identity into your infrastructure repo | SOPS uses that identity to decrypt |
 | Keep the only copy of the passphrase on the encrypted volume | Self-evident on paper, easy to do in practice |
 
 The failure mode is not "hard to recover." It is **unrecoverable**, and you
@@ -43,11 +43,11 @@ So:
 
 ```
   SECRET  ──age -p (passphrase)──>  CIPHERTEXT  ──> copy freely
-                   │                                 CD-R x2, safe, bank box
+                   │                                 CD-R x2, locations A and B
                    │
-                   └─ PASSPHRASE ──ssss 2-of-3──> SHARE A: home safe
-                                                  SHARE B: bank box
-                                                  SHARE C: trusted family member
+                   └─ PASSPHRASE ──ssss 2-of-3──> SHARE A: location A
+                                                  SHARE B: location B
+                                                  SHARE C: location C
 ```
 
 The ciphertext is safe to replicate — it is useless alone. The passphrase is
@@ -55,10 +55,10 @@ Shamir-split, so no single location can decrypt, and losing any one location
 still leaves recovery possible.
 
 **Note the deliberate crossing:** a CD-R and a passphrase share live in the
-same physical box only where that is unavoidable. Bank box holds ciphertext
-plus one share; home safe holds ciphertext plus one share. Either box alone is
-insufficient (needs 2 shares). Both boxes together, or one box plus the family
-member, recovers.
+same physical place only where that is unavoidable. A holds ciphertext plus one
+share; B holds ciphertext plus one share. Either alone is insufficient (needs 2
+shares). A and B together, or either one plus C, recovers. What A, B and C are:
+`docs/06-storage.md`.
 
 ### Why `age -p` and not `age -r`
 
@@ -92,11 +92,11 @@ Fill this in as you perform each ceremony. It is the map future-you needs.
 
 | To recover | You need | Stored at | Depends on a ceremony key? |
 |---|---|---|---|
-| age identity (SOPS) | 2 of 3 passphrase shares + any CD-R | safe / bank / family | **No** — by design |
-| SSH user CA (PIV 9c) | The twin token, **or** 2 of 3 shares + any CD-R | desk drawer / bank box / archive | **No** — by design |
-| SSH host CA (PIV 9a) | The twin token, **or** 2 of 3 shares + any CD-R | desk drawer / bank box / archive | **No** — by design |
+| age identity (SOPS) | 2 of 3 passphrase shares + any CD-R | locations A / B / C | **No** — by design |
+| SSH user CA (PIV 9c) | The twin token, **or** 2 of 3 shares + any CD-R | daily-use storage / location B / archive | **No** — by design |
+| SSH host CA (PIV 9a) | The twin token, **or** 2 of 3 shares + any CD-R | daily-use storage / location B / archive | **No** — by design |
 | PIV PIN / PUK / mgmt key (per token) | 2 of 3 shares + any CD-R | archive | **No** — by design |
-| GPG master key | 2 of 3 shares + any CD-R | safe / bank / family | **No** — by design |
+| GPG master key | 2 of 3 shares + any CD-R | locations A / B / C | **No** — by design |
 | Daily GPG subkeys | GPG master key | see above | Yes — acceptable, subkeys are replaceable |
 | Talos cluster CA | age identity → SOPS state | see age identity | Yes — acceptable, cluster is rebuildable |
 | Infisical secrets | Its own root credential | password manager | Separate chain — do not entangle |
@@ -109,6 +109,6 @@ can be rebuilt. Root material must always read **No**.
 
 ## Where the rest lives
 
-- Step-by-step procedures: `docs/03-ceremonies.md`
-- Physical locations and distribution: `docs/04-storage.md`
-- What each key and printout is for: `docs/02-artifacts.md`
+- Step-by-step procedures: `docs/04-ceremonies.md`
+- Physical locations and distribution: `docs/06-storage.md`
+- What each key and printout is for: `docs/03-artifacts.md`

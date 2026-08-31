@@ -207,7 +207,7 @@ test for this).
 
 ## Testing
 
-Three tiers. Full detail in `docs/07-testing.md`.
+Three tiers. Full detail in `docs/09-testing.md`.
 
 ```sh
 make test        # tier 1: logic, manifests, hygiene. Runs anywhere

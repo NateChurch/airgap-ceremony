@@ -30,8 +30,8 @@ age-keygen -y age-identity.txt > age-recipient.txt
 cat age-recipient.txt
 ```
 
-Record the public key in the inventory (`docs/02-artifacts.md`). It is not
-secret.
+Record the public key on the durable inventory (`docs/11-inventory.md`). It is
+not secret.
 
 Load onto Key 3 and its twin per Yubico's current age/PIV guidance, then:
 
@@ -89,7 +89,7 @@ public key, which is why the public key must also be archived.
 
 ## Ceremony C — SSH certificate authorities
 
-Full procedure, rationale, and troubleshooting: **`docs/10-ssh-ca.md`**. Read
+Full procedure, rationale, and troubleshooting: **`docs/05-ssh-ca.md`**. Read
 it — this is a summary.
 
 One command runs the whole ceremony, including its own archive and recovery
@@ -101,7 +101,8 @@ ceremony-ssh-ca.sh
 ```
 
 It generates the host and user CA keypairs **off-card** (ECDSA P-256), imports
-them to **two** YubiKeys — Key 3 and its bank-box twin — sets a fresh PIV PIN,
+them to **two** YubiKeys — Key 3 and its off-site twin (Location B) — sets a
+fresh PIV PIN,
 PUK and management key on each, proves each token can sign by issuing throwaway
 certificates and parsing them back, then archives the CA private keys and the
 PIV secrets through `archive-ceremony.sh` and proves recovery before you leave.

@@ -6,7 +6,7 @@
 #
 #   1. generate the host and user CA keypairs OFF-CARD (ECDSA P-256)
 #   2. generate a fresh PIV PIN, PUK and management key per token
-#   3. import the CA keys into TWO YubiKeys (Key 3 and its bank-box twin)
+#   3. import the CA keys into TWO YubiKeys (Key 3 and its off-site twin)
 #   4. prove each token can actually sign, by issuing throwaway certs and
 #      parsing them back
 #   5. archive the private keys and the PIV secrets through the existing
@@ -17,7 +17,7 @@
 # This is a PEER of archive-ceremony.sh, not a step inside it. It reuses that
 # script for the encrypt/split/burn path rather than reimplementing it.
 #
-# Why off-card generation: the bank-box twin must carry the SAME CA key, and a
+# Why off-card generation: the off-site twin must carry the SAME CA key, and a
 # YubiKey cannot export a key generated on it. So the key is generated here and
 # imported to both. The private keys therefore exist, briefly, in tmpfs on this
 # machine and then only inside the encrypted archive.
@@ -45,13 +45,19 @@ LIB="${CEREMONY_LIB:-/usr/local/lib/ceremony-lib.sh}"
 # ===========================================================================
 CA_KINDS=(host user)
 
+# Organisation label baked into the CA certificate subjects and key comments.
+# A label, not a secret -- but it ends up in every certificate this CA ever
+# signs and on the printed inventory, so it is a variable rather than a literal
+# typed in four places. Override for your own estate:  CEREMONY_ORG=acme ...
+CA_ORG="${CEREMONY_ORG:-ceremony}"
+
 declare -A CA_SUBJECT=(
-	[host]="CN=fablab SSH Host CA"
-	[user]="CN=fablab SSH User CA"
+	[host]="CN=${CA_ORG} SSH Host CA"
+	[user]="CN=${CA_ORG} SSH User CA"
 )
 declare -A CA_COMMENT=(
-	[host]="fablab-ssh-host-ca"
-	[user]="fablab-ssh-user-ca"
+	[host]="${CA_ORG}-ssh-host-ca"
+	[user]="${CA_ORG}-ssh-user-ca"
 )
 
 CA_KEYTYPE=ecdsa          # ssh-keygen -t
@@ -296,7 +302,7 @@ stage_archive() {
 		cp "$WORK/${kind}-ca.pub" "$ARCHIVE_DIR/$(ARCHIVE_PUB "$kind")"
 	done
 	{
-		echo "fablab SSH certificate authorities"
+		echo "${CA_ORG} SSH certificate authorities"
 		echo "generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 		echo "algorithm: ${CA_KEYTYPE} ${CA_KEYBITS} (P-256)"
 		echo
@@ -408,10 +414,12 @@ finish() {
 	cat <<EOF
         1. Burn a SECOND copy now:  archive-ceremony.sh -n ${SHARES} -t ${THRESHOLD} -d ${DEV} <re-stage>
            (or re-run this ceremony; the staged dir is gone with tmpfs)
-        2. Fill in worksheet Section 3: both token serials, both CA
-           fingerprints, the twin location, and tick the twin-vs-share
-           location box.
-        3. Destroy worksheet Section 1 -- it carried the passphrase.
+        2. Fill in the DURABLE INVENTORY (docs/11-inventory.md): both token
+           serials, both CA fingerprints, the twin location, and tick the
+           twin-vs-share location box. It is a separate sheet from the
+           worksheet and it is the one you keep.
+        3. Destroy worksheet Section 1 -- it carried the passphrase, and cut
+           apart the Section 2 share cards.
         4. Both CA public keys go into the fleet trust config; nothing here
            does that for you.
 EOF

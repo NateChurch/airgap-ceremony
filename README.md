@@ -77,8 +77,8 @@ Exit 1 on any failure. Do not proceed with a ceremony on a box that fails.
 
 **Do not build this in WSL.** `make preflight` refuses. live-build's chroot
 bind-mounts and loop handling are an unnecessary variable in a build whose whole
-point is reproducibility. Build in a Proxmox VM on `primus`, or a privileged
-LXC. WSL is fine for editing the config; not for producing the artifact.
+point is reproducibility. Build in a VM (Proxmox, libvirt, whatever you run) or
+a privileged LXC. WSL is fine for editing the config; not for producing the artifact.
 
 **pcscd and scdaemon contend for the CCID interface.** `ykman` and
 `yubico-piv-tool` go through pcscd; GnuPG's internal driver wants exclusive

@@ -107,8 +107,8 @@ print_dependency_reminders() {
           [ ] The passphrase is stored only in a password manager unlocked
               by a YubiKey that this archive backs up
           [ ] The only copy of the passphrase is on the encrypted volume
-          [ ] This archive is SOPS-encrypted into the fablab repo using an
-              identity that is inside this archive
+          [ ] This archive is SOPS-encrypted into your infrastructure repo
+              using an identity that is inside this archive
           [ ] Every passphrase share is going to the same physical location
 
         If any is TRUE, stop and restructure before burning anything.
@@ -247,8 +247,9 @@ assert_distinct_locations() {  # assert_distinct_locations <num-shares>
         passphrase, that one location can recover everything on its own --
         which is the failure this split exists to prevent.
 
-        Name the physical location of each. Be specific and consistent
-        ("bank box", not "the bank" one time and "SDB" the next).
+        Name the physical location of each. Be specific and consistent --
+        use the exact wording you already wrote on the planning worksheet,
+        not a different abbreviation each time.
 EOF
 	read -r -p "  Key 3 twin location: " loc
 	twin=("$loc")

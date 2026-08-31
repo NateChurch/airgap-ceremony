@@ -22,15 +22,33 @@ ceremony-guide all          # everything, paged
 | `AGENTS.md` | Orientation for an AI agent reading this disc |
 | `docs/00-quickstart.md` | The short path. Read this if you are mid-ceremony |
 | `docs/01-recovery-model.md` | **The one rule.** Why recovery must not depend on what it recovers |
-| `docs/02-artifacts.md` | Every key, what it does, where it lives, what gets printed |
-| `docs/03-ceremonies.md` | Step-by-step procedures for each ceremony |
-| `docs/04-storage.md` | Physical locations, distribution, estate planning |
-| `docs/05-troubleshooting.md` | Selftest failures and what each one means |
-| `docs/06-image-build.md` | How this ISO is built and rebuilt |
-| `docs/07-testing.md` | The three test tiers, and why tier 3 is manual |
+| `docs/02-prerequisites.md` | What to have and decide before booting. Defines Locations A/B/C. Planning worksheet |
+| `docs/03-artifacts.md` | Every key, what it does, where it lives, what gets printed |
+| `docs/04-ceremonies.md` | Step-by-step procedures for each ceremony |
+| `docs/05-ssh-ca.md` | The SSH certificate authority ceremony in full |
+| `docs/06-storage.md` | Distribution, estate planning, annual maintenance |
+| `docs/07-troubleshooting.md` | Selftest failures and what each one means |
+| `docs/08-image-build.md` | How this ISO is built and rebuilt |
+| `docs/09-testing.md` | The three test tiers, and why tier 3 is manual |
+| `docs/10-worksheet.md` | **Print.** The in-the-room worksheet: scratch page and share cards |
+| `docs/11-inventory.md` | **Print.** The durable record. Nothing on it is secret |
+| `docs/12-appendix.md` | Raw commands underneath the scripts, for verification and recovery |
 
 Read `01-recovery-model.md` before generating anything. It is short, and the
 mistake it describes is silent at ceremony time and total at recovery time.
+Then `02-prerequisites.md`, which is the one that takes days to act on.
+
+### The three printed forms
+
+They are separate documents on purpose. A single page carrying both a
+passphrase and the address of a disc defeats the 2-of-3 split for anyone who
+finds it.
+
+| Form | Filled in | Fate |
+|---|---|---|
+| `docs/02-prerequisites.md`, planning worksheet | Before, at your desk | Kept. Maps Location A/B/C to real places |
+| `docs/10-worksheet.md` | During, in the room | Scratch page destroyed there; share cards dispersed |
+| `docs/11-inventory.md` | During and after | Two copies, stored with the discs |
 
 ---
 
@@ -87,7 +105,7 @@ is the *environment*, that one holds *your key material*.
 ```
 
 `RECOVERY.txt` is deliberately short and assumes no prior knowledge. It exists
-for whoever opens the safety deposit box, who may not be you.
+for whoever opens the off-site box, who may not be you.
 
 ---
 
